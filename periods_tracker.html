@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Period Companion</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0; padding: 0;
+      background: #f9f9f9;
+      color: #333;
+    }
+    header {
+      background: #e75480;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 22px;
+    }
+    nav {
+      display: flex;
+      justify-content: center;
+      background: #ff9aae;
+      padding: 10px;
+    }
+    nav button {
+      margin: 0 10px;
+      padding: 10px 15px;
+      border: none;
+      background: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    nav button:hover {
+      background: #ffd6de;
+    }
+    section {
+      display: none;
+      padding: 20px;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    section.active { display: block; }
+    @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin: 10px 0;
+    }
+    input, select, button {
+      padding: 10px; margin: 5px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      width: 100%;
+    }
+    button.action {
+      background: #e75480; color: white;
+    }
+    .hidden { display: none; }
+    .welcome {
+      text-align: center;
+      margin: 10px 0;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<header>🌸 Period Companion 🌸</header>
+
+<!-- LOGIN / SIGNUP -->
+<div id="authSection" class="card">
+  <h2>Login or Sign Up</h2>
+  <div id="signupForm">
+    <h3>Sign Up</h3>
+    <input type="text" id="signupName" placeholder="Name">
+    <input type="email" id="signupEmail" placeholder="Email">
+    <input type="password" id="signupPassword" placeholder="Password">
+    <button class="action" onclick="signUp()">Sign Up</button>
+  </div>
+  <hr>
+  <div id="loginForm">
+    <h3>Login</h3>
+    <input type="email" id="loginEmail" placeholder="Email">
+    <input type="password" id="loginPassword" placeholder="Password">
+    <button class="action" onclick="login()">Login</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appSection" class="hidden">
+  <nav>
+    <button onclick="showSection('tracker')">Tracker</button>
+    <button onclick="showSection('symptoms')">Symptoms</button>
+    <button onclick="showSection('diet')">Diet & Exercise</button>
+    <button onclick="showSection('guide')">Cycle Guide</button>
+    <button onclick="showSection('doctor')">Doctor Help</button>
+    <button onclick="logout()">Logout</button>
+  </nav>
+
+  <div class="welcome" id="welcomeMsg"></div>
+
+  <!-- Period Tracker -->
+  <section id="tracker" class="active">
+    <div class="card">
+      <h2>Period Tracker</h2>
+      <input type="date" id="periodDate">
+      <button class="action" onclick="addPeriod()">Add Period Date</button>
+      <h3>Past Dates</h3>
+      <ul id="periodHistory"></ul>
+      <h3>Next Reminder</h3>
+      <p id="nextReminder">No data yet</p>
+    </div>
+  </section>
+
+  <!-- Symptom Tracker -->
+  <section id="symptoms">
+    <div class="card">
+      <h2>Symptom Tracker</h2>
+      <input type="date" id="symptomDate">
+      <label><input type="checkbox" value="Cramps"> Cramps</label><br>
+      <label><input type="checkbox" value="Headache"> Headache</label><br>
+      <label><input type="checkbox" value="Mood Swings"> Mood Swings</label><br>
+      <label><input type="checkbox" value="Fatigue"> Fatigue</label><br>
+      <label><input type="checkbox" value="Back Pain"> Back Pain</label><br>
+      <button class="action" onclick="saveSymptoms()">Save Symptoms</button>
+      <h3>History</h3>
+      <ul id="symptomHistory"></ul>
+    </div>
+  </section>
+
+  <!-- Diet & Exercise -->
+  <section id="diet">
+    <div class="card">
+      <h2>Diet & Exercise</h2>
+      <p>✅ Eat: Leafy greens, fruits, nuts, yogurt, dark chocolate.<br>
+         ❌ Avoid: Junk food, excess caffeine, too much sugar.<br>
+         💪 Exercises: Light yoga, stretching, walking, breathing exercises.</p>
+    </div>
+  </section>
+
+  <!-- Cycle Guide -->
+  <section id="guide">
+    <div class="card">
+      <h2>Cycle Guide</h2>
+      <p>Your menstrual cycle usually lasts 28 days. Keep track of your flow, symptoms, and energy. This helps you know your body better.</p>
+    </div>
+  </section>
+
+  <!-- Doctor Help -->
+  <section id="doctor">
+    <div class="card">
+      <h2>When to See a Doctor</h2>
+      <p>⚠️ Severe pain not relieved by medicine.<br>
+         ⚠️ Extremely heavy bleeding.<br>
+         ⚠️ Missed periods for several months (not due to pregnancy).<br>
+         ⚠️ Dizziness or fainting during cycle.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+  // Load users
+  let appData = JSON.parse(localStorage.getItem("appData")) || { users: {}, currentUser: null };
+
+  function saveAppData() {
+    localStorage.setItem("appData", JSON.stringify(appData));
+  }
+
+  // Signup
+  function signUp() {
+    const name = document.getElementById("signupName").value.trim();
+    const email = document.getElementById("signupEmail").value.trim();
+    const password = document.getElementById("signupPassword").value.trim();
+
+    if (!name || !email || !password) return alert("All fields required!");
+
+    if (appData.users[email]) return alert("User already exists!");
+
+    appData.users[email] = { name, password, periods: [], symptoms: [] };
+    saveAppData();
+    alert("Signup successful! Please login.");
+  }
+
+  // Login
+  function login() {
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value.trim();
+
+    if (!appData.users[email] || appData.users[email].password !== password) {
+      return alert("Invalid credentials!");
+    }
+
+    appData.currentUser = email;
+    saveAppData();
+    loadApp();
+  }
+
+  function logout() {
+    appData.currentUser = null;
+    saveAppData();
+    document.getElementById("appSection").classList.add("hidden");
+    document.getElementById("authSection").classList.remove("hidden");
+  }
+
+  // Load app for user
+  function loadApp() {
+    document.getElementById("authSection").classList.add("hidden");
+    document.getElementById("appSection").classList.remove("hidden");
+
+    const user = appData.users[appData.currentUser];
+    document.getElementById("welcomeMsg").innerText = `Welcome, ${user.name} 👋`;
+
+    renderPeriods();
+    renderSymptoms();
+  }
+
+  // Tabs
+  function showSection(id) {
+    document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+  }
+
+  // Period Tracker
+  function addPeriod() {
+    const date = document.getElementById("periodDate").value;
+    if (!date) return alert("Select a date!");
+
+    appData.users[appData.currentUser].periods.push(date);
+    saveAppData();
+    renderPeriods();
+  }
+
+  function renderPeriods() {
+    const list = document.getElementById("periodHistory");
+    list.innerHTML = "";
+    const periods = appData.users[appData.currentUser].periods;
+    periods.forEach(d => {
+      const li = document.createElement("li");
+      li.innerText = d;
+      list.appendChild(li);
+    });
+
+    if (periods.length > 0) {
+      let lastDate = new Date(periods[periods.length-1]);
+      lastDate.setDate(lastDate.getDate() + 28);
+      document.getElementById("nextReminder").innerText = 
+        "Next expected: " + lastDate.toDateString();
+    }
+  }
+
+  // Symptoms
+  function saveSymptoms() {
+    const date = document.getElementById("symptomDate").value;
+    const checked = [...document.querySelectorAll("#symptoms input[type=checkbox]:checked")].map(i => i.value);
+
+    if (!date || checked.length === 0) return alert("Select date and symptoms!");
+
+    appData.users[appData.currentUser].symptoms.push({ date, list: checked });
+    saveAppData();
+    renderSymptoms();
+  }
+
+  function renderSymptoms() {
+    const list = document.getElementById("symptomHistory");
+    list.innerHTML = "";
+    const symptoms = appData.users[appData.currentUser].symptoms;
+    symptoms.forEach(s => {
+      const li = document.createElement("li");
+      li.innerText = `${s.date} → ${s.list.join(", ")}`;
+      list.appendChild(li);
+    });
+  }
+
+  // Auto-load if already logged in
+  if (appData.currentUser) loadApp();
+</script>
+
+</body>
+</html>
